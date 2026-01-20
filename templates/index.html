@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediksi Suhu Harian</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 40px;
+        }
+        .card {
+            box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+            border-radius: 12px;
+        }
+        .day-box {
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .result-box {
+            background-color: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            color: #0d6efd;
+        }
+        .feature-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .feature-hint {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+
+            <div class="card">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4>Aplikasi Prediksi Suhu Harian (LSTM Multivariat)</h4>
+                </div>
+
+                <div class="card-body">
+                    <p class="text-muted text-center">
+                        Masukkan data cuaca selama <b>7 hari terakhir</b>.
+                        Nilai input akan tetap tersimpan setelah prediksi.
+                    </p>
+
+                    <form method="post" id="predictForm">
+
+                        {% for i in range(1, 8) %}
+                        <div class="day-box">
+                            <h6 class="text-primary">Hari ke-{{ i }}</h6>
+                            <div class="row">
+
+                                <div class="col-md-3 mb-2">
+                                    <label class="feature-label">Suhu (°C)</label>
+                                    <input type="number" step="0.01" class="form-control"
+                                           name="temp_{{ i }}"
+                                           value="{{ form_data.get('temp_' ~ i, '') }}"
+                                           required>
+                                    <div class="feature-hint">25 – 35 °C</div>
+                                </div>
+
+                                <div class="col-md-3 mb-2">
+                                    <label class="feature-label">Kelembaban (%)</label>
+                                    <input type="number" step="0.01" class="form-control"
+                                           name="hum_{{ i }}"
+                                           value="{{ form_data.get('hum_' ~ i, '') }}"
+                                           required>
+                                    <div class="feature-hint">60 – 90 %</div>
+                                </div>
+
+                                <div class="col-md-3 mb-2">
+                                    <label class="feature-label">Angin (m/s)</label>
+                                    <input type="number" step="0.01" class="form-control"
+                                           name="wind_{{ i }}"
+                                           value="{{ form_data.get('wind_' ~ i, '') }}"
+                                           required>
+                                    <div class="feature-hint">0 – 10 m/s</div>
+                                </div>
+
+                                <div class="col-md-3 mb-2">
+                                    <label class="feature-label">Tekanan (hPa)</label>
+                                    <input type="number" step="0.01" class="form-control"
+                                           name="press_{{ i }}"
+                                           value="{{ form_data.get('press_' ~ i, '') }}"
+                                           required>
+                                    <div class="feature-hint">1000 – 1025 hPa</div>
+                                </div>
+
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <div id="warningAlert" class="alert alert-warning d-none">
+                            ⚠️ Silakan lengkapi semua data sebelum melakukan prediksi.
+                        </div>
+
+                        <div class="d-grid gap-2 mt-3">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                Prediksi Suhu Besok
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-lg" id="clearBtn">
+                                Bersihkan Data Input
+                            </button>
+                        </div>
+
+                    </form>
+
+                    <!-- RESULT (tidak memaksa scroll) -->
+                    <div class="result-box" id="result">
+                        {% if prediction %}
+                            {{ prediction }}
+                        {% else %}
+                            Hasil prediksi akan muncul di sini
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<script>
+document.getElementById("clearBtn").addEventListener("click", function () {
+    const form = document.getElementById("predictForm");
+    const result = document.getElementById("result");
+
+    // Kosongkan semua input secara manual
+    const inputs = form.querySelectorAll("input");
+    inputs.forEach(input => input.value = "");
+
+    // Reset hasil prediksi
+    result.innerHTML = "Hasil prediksi akan muncul di sini";
+});
+</script>
+<script>
+document.querySelector("form").addEventListener("submit", function(e) {
+    const inputs = this.querySelectorAll("input[required]");
+    let valid = true;
+
+    inputs.forEach(input => {
+        if (!input.value) {
+            valid = false;
+        }
+    });
+
+    if (!valid) {
+        e.preventDefault();
+        document.getElementById("warningAlert").classList.remove("d-none");
+    }
+});
+</script>
+
+</body>
+</html>
